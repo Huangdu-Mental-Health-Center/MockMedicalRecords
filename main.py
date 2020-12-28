@@ -76,6 +76,7 @@ def get_prescription_by_user_id_and_order_id():
 def get_record_by_user_id():
     response = {
         "records": [],
+        "count": -1,
         "success": False,
     }
     try:
@@ -85,13 +86,14 @@ def get_record_by_user_id():
         for record in mock_record_list["records"]:
             if record["user_id"] == user_id:
                 response["records"].append(record)
+        response["count"] = len(response["records"])
         response["success"] = True
     except Exception as e:
         print(e.with_traceback)
         response = {
         "records": [],
+        "count": -1,
         "success": False,
-        "msg": str(e)
     }
     return response
 
@@ -100,6 +102,7 @@ def get_record_by_user_id():
 def get_prescription_by_user_id():
     response = {
         "prescriptions": [],
+        "count": -1,
         "success": False,
     }
     try:
@@ -109,11 +112,13 @@ def get_prescription_by_user_id():
         for prescription in mock_record_list["prescriptions"]:
             if prescription["user_id"] == user_id:
                 response["prescriptions"].append(prescription)
+        response["count"] = len(response["prescriptions"])
         response["success"] = True
     except Exception as e:
         print(e.with_traceback)
         response = {
         "prescriptions": [],
+        "count": -1,
         "success": False,
     }
     return response
