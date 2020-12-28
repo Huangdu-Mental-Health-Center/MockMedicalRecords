@@ -4,6 +4,7 @@ from flask import Flask, request
 from gevent.pywsgi import WSGIServer
 import json
 from threading import Thread
+import base64
 
 app = Flask(__name__)
 
@@ -16,6 +17,15 @@ def after_request(resp):
 with open("./marshmallow/mock_medical_records/assets/data.json", encoding='utf8') as medical_record_list_json:
     mock_record_list = json.loads(medical_record_list_json.read())
 
+def decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw: str) -> str:
+    authorization_jwt = authorization_jwt_raw.split(" ")[1]
+    payload_base64_encoded = authorization_jwt.split(".")[1]
+    missing_padding = len(payload_base64_encoded) % 4
+    if missing_padding:
+        payload_base64_encoded += '='* (4 - missing_padding)
+    jwt_payload = json.loads(base64.b64decode(payload_base64_encoded).decode('utf-8'))
+    return jwt_payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+
 @app.route('/query_record_by_user_id_and_order_id', methods=['GET'])
 def get_record_by_user_id_and_order_id():
     response = {
@@ -23,7 +33,8 @@ def get_record_by_user_id_and_order_id():
         "success": False,
     }
     try:
-        user_id = request.args.get('user_id')
+        authorization_jwt_raw = request.headers.get("Authorization")
+        user_id = decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw)
         order_id = request.args.get('order_id')
         for record in mock_record_list["records"]:
             if record["user_id"] == user_id and record["order_id"] == order_id:
@@ -45,7 +56,9 @@ def get_prescription_by_user_id_and_order_id():
         "success": False,
     }
     try:
-        user_id = request.args.get('user_id')
+        authorization_jwt_raw = request.headers.get("Authorization")
+        user_id = decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw)
+        user_id = decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw)
         order_id = request.args.get('order_id')
         for prescription in mock_record_list["prescriptions"]:
             if prescription["user_id"] == user_id and prescription["order_id"] == order_id:
@@ -66,7 +79,8 @@ def get_record_by_user_id():
         "success": False,
     }
     try:
-        user_id = request.args.get('user_id')
+        authorization_jwt_raw = request.headers.get("Authorization")
+        user_id = decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw)
         order_id = request.args.get('order_id')
         for record in mock_record_list["records"]:
             if record["user_id"] == user_id:
@@ -77,18 +91,20 @@ def get_record_by_user_id():
         response = {
         "records": [],
         "success": False,
+        "msg": str(e)
     }
     return response
 
 
-@app.route('/query_prescription_by_user_id', methods=['GET'])
+@app.route('/get_prescription_by_user_id', methods=['GET'])
 def get_prescription_by_user_id():
     response = {
         "prescriptions": [],
         "success": False,
     }
     try:
-        user_id = request.args.get('user_id')
+        authorization_jwt_raw = request.headers.get("Authorization")
+        user_id = decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw)
         order_id = request.args.get('order_id')
         for prescription in mock_record_list["prescriptions"]:
             if prescription["user_id"] == user_id:
