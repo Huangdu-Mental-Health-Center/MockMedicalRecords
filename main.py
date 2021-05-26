@@ -4,7 +4,7 @@ from flask import Flask, request
 from gevent.pywsgi import WSGIServer
 import json
 from threading import Thread
-import base64
+from utils.jwt_util import decode_raw_jwt_and_return_user_id_str
 
 app = Flask(__name__)
 
@@ -16,15 +16,6 @@ def after_request(resp):
 
 with open("./marshmallow/mock_medical_records/assets/data.json", encoding='utf8') as medical_record_list_json:
     mock_record_list = json.loads(medical_record_list_json.read())
-
-def decode_raw_jwt_and_return_user_id_str(authorization_jwt_raw: str) -> str:
-    authorization_jwt = authorization_jwt_raw.split(" ")[1]
-    payload_base64_encoded = authorization_jwt.split(".")[1]
-    missing_padding = len(payload_base64_encoded) % 4
-    if missing_padding:
-        payload_base64_encoded += '='* (4 - missing_padding)
-    jwt_payload = json.loads(base64.b64decode(payload_base64_encoded).decode('utf-8'))
-    return jwt_payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
 
 @app.route('/query_record_by_user_id_and_order_id', methods=['GET'])
 def get_record_by_user_id_and_order_id():
